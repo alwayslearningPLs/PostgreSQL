@@ -1,0 +1,72 @@
+-- \d is used to display all type of objects (?)
+
+-- \dt is used to display tables
+-- \dt+ is used to display even more information
+
+CREATE TABLE IF NOT EXISTS accounts (
+  user_id     serial          PRIMARY KEY,
+  username    VARCHAR (50)    UNIQUE NOT NULL,
+  password    VARCHAR (255)   NOT NULL,
+  email       VARCHAR (255)   UNIQUE NOT NULL,
+  created_on  TIMESTAMP       NOT NULL,
+  last_login  TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS roles (
+  role_id   serial        PRIMARY KEY,
+  role_name VARCHAR (255) UNIQUE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS account_roles(
+  role_id     INT       NOT NULL,
+  user_id     INT       NOT NULL,
+  grant_date  TIMESTAMP NOT NULL,
+  PRIMARY KEY (role_id, user_id),
+  FOREIGN KEY (role_id)
+    REFERENCES roles (role_id),
+  FOREIGN KEY (user_id)
+    REFERENCES accounts (user_id)
+);
+
+-- I forgot to set the password size to a larger one...
+-- ALTER TABLE accounts
+-- ALTER COLUMN password TYPE VARCHAR (255);
+
+-- We need to enable the pgcrypto module.
+CREATE EXTENSION pgcrypto;
+
+-- Here we are using the blowfish algorithm with gen_salt: bf, md5, xdes, des
+INSERT INTO accounts(username, password, email, created_on, last_login)
+  VALUES ('mrtimeout', crypt('abc123.', gen_salt('bf')), 'estonoesmiputocorreo@gmail.com', NOW(), NOW());
+
+-- When using the wildcard with the returning statement, we return the full row inserted with the 'INSERT 0 <count>' line
+INSERT INTO accounts(username, password, email, created_on)
+  VALUES ('exploit', crypt('abc123.', gen_salt('bf')), 'exploit@gmail.com', NOW())
+  RETURNING *;
+
+INSERT INTO accounts(username, password, email, created_on)
+  VALUES ('nekes', crypt('abc123.', gen_salt('bf')), 'nekes@gmail.com', NOW())
+  RETURNING user_id;
+
+INSERT INTO accounts(username, password, email, created_on)
+  VALUES ('ivan', crypt('abc123.', gen_salt('bf')), 'ivan@gmail.com', NOW())
+  RETURNING user_id as id;
+
+INSERT INTO roles(role_name)
+  VALUES 
+    ('admin'),
+    ('standard'),
+    ('nobody')
+  RETURNING *;
+
+INSERT INTO account_roles(role_id, user_id, grant_date)
+  VALUES
+    ((SELECT role_id FROM roles WHERE role_name like 'admin'), (SELECT user_id FROM accounts WHERE username like 'mrtimeout'), NOW()),
+    ((SELECT role_id FROM roles WHERE role_name like 'standard'), (SELECT user_id FROM accounts WHERE username like 'exploit'), NOW()),
+    ((SELECT role_id FROM roles WHERE role_name like 'nobody'), (SELECT user_id FROM accounts WHERE username like 'nekes'), NOW())
+  RETURNING role_id, user_id;
+
+SELECT r.role_name, a.username
+FROM account_roles AS ar
+  LEFT JOIN roles AS r ON r.role_id = ar.role_id
+  LEFT JOIN accounts AS a ON a.user_id = ar.user_id;

@@ -1,0 +1,32 @@
+@startuml db
+
+hide circle
+skinparam linetype ortho
+
+entity accounts {
+  * user_id : number <<generated>>
+  --
+  * username : text
+  * password : text
+  * email : text
+  * created_on : date
+  last_login : date
+}
+
+entity roles {
+  * role_id : number <<generated>>
+  --
+  * role_name : text
+}
+
+entity account_roles {
+  * role_id : number
+  * user_id : number
+  --
+  grant_date : date
+}
+
+accounts }|--o{ account_roles
+roles }|--o{ account_roles
+
+@enduml
