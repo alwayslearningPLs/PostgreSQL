@@ -95,3 +95,17 @@ DROP ROLE IF EXISTS mrtimeout1;
 DROP ROLE IF EXISTS mrtimeout;
 DROP ROLE IF EXISTS book_reviewers;
 DROP ROLE IF EXISTS cool_kids;
+
+-- pg_hba.conf is the PostGres Host Based Access configuration
+show hba_file;
+
+-- If we modify the pg_hba.conf file, we need to reload the cluster: pg_ctl reload -D $PGDATA
+-- The format of each line in pg_hba.conf file is:
+-- <connection-type> <database> <role> <remote-machine> <auth-method>
+-- (local|host|hostssl) (all|<database-name>) (all|<role-name>) (<DNS>|<IP>|<Subnet>) (scram-sha-256|md5|reject|trust)
+-- In this file, order matters, we should write the more specific rules at the beggining of the file
+--
+-- We can't write more than one rule on the same line, but we can merge rules inside only one, appending <roles>, <databases>, and <remote-machines>
+-- in the same field separated by commas.
+--
+-- Instead of using roles (as users), we can use roles (as groups) prepending the sign '+' to the role_name
