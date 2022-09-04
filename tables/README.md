@@ -13,6 +13,23 @@ CREATE TABLE [IF NOT EXISTS] table_name (
 
 If we try to create a table that already exists, it will lead to an error.
 
+### Types of tables
+
+- Temporary tables: Very fast tables, visible only to the user who created them.
+- Unlogged tables: Very fast tables to be used as support tables common to all users.
+- Logged tables: Regular tables.
+
+```postgres
+CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE ();
+```
+
+### GENERATED AS IDENTITY
+
+`<column-name> <type> GENERATED { ALWAYS | BY DEFAULT } AS IDENTITY[ ( sequence_option ) ]`
+
+- The type can be `SMALLINT`, `INT` or `BIGINT`.
+- The `GENERATED ALWAYS` instructs PostgreSQL to always generate a value for the identity column. If you attempt to insert (or update) values into the `GENERATED ALWAYS AS IDENTITY` column, PostgreSQL will issue an error.
+
 ### Constraints
 
 - `NOT NULL`: Ensures that values in a column cannot be `NULL`.
