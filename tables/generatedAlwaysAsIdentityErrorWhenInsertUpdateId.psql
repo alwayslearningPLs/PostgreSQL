@@ -1,0 +1,31 @@
+DROP DATABASE testing;
+CREATE DATABASE testing;
+
+\c testing;
+
+-- This can be copy and paste, but not the statements written before.
+CREATE TABLE users (
+  user_id INT GENERATED ALWAYS AS IDENTITY,
+  user_name TEXT NOT NULL,
+  PRIMARY KEY (user_id),
+  UNIQUE(user_name)
+);
+
+INSERT INTO users (user_name)
+VALUES
+  ('mrtimeout'),
+  ('pedro'),
+  ('manolo');
+
+-- Error happens:
+-- DETAIL:  Column "user_id" is an identity column defined as GENERATED ALWAYS.
+-- HINT:  Use OVERRIDING SYSTEM VALUE to override.
+INSERT INTO users(user_id, user_name)
+VALUES (4, 'another_name');
+
+-- Error happens:
+-- ERROR:  column "user_id" can only be updated to DEFAULT
+-- DETAIL:  Column "user_id" is an identity column defined as GENERATED ALWAYS.
+UPDATE users
+SET user_id = 1000
+WHERE user_name like 'mrtimeout';
