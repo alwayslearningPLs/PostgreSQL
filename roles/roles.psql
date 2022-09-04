@@ -1,0 +1,97 @@
+-- Learning about roles
+
+-- This will create a role, whose name is mrtimeout and has a password.
+-- By default, NOLOGIN option is used, so this role can't access the cluster postgresql
+CREATE ROLE mrtimeout
+WITH PASSWORD 'abc123.';
+
+-- Test if the role was added correctly
+SELECT rolname FROM pg_roles;
+
+-- By default, it will only display 'postgres' role.
+SELECT rolname FROM pg_roles WHERE rolcanlogin = 't';
+
+-- This query will return us the current role that we are using.
+SELECT current_role;
+SELECT * FROM pg_roles WHERE rolname like (SELECT current_role);
+
+-- We can also use \du; (Describe User) to describe our current role;
+-- \du <role-name> also works
+
+-- Table pg_authid inside pg_catalog is a good table to look for information about roles;
+SELECT * FROM pg_authid;
+
+SELECT rolname, rolpassword FROM pg_authid;
+
+-- columns (\d pg_roles;):
+-- rolname
+-- rolsuper
+-- rolinherit
+-- rolcreaterole
+-- rolcreatedb
+-- rolcanlogin (LOGIN|NOLOGIN - default is NOLOGIN)
+-- rolreplication
+-- rolconnlimit
+-- rolpassword (PASSWORD|ENCRYPTED PASSWORD - These two options are the same, because by default, passwords are encrypted)
+-- rolvaliduntil (VALID UNTIL 'yyyy-mm-dd hh-mm-ss')
+-- rolbypassrls
+-- rolconfig
+-- oid
+
+DROP ROLE mrtimeout;
+
+CREATE ROLE mrtimeout
+WITH LOGIN PASSWORD 'abc123.';
+
+DROP ROLE IF EXISTS mrtimeout;
+
+-- ENCRYPTED PASSWORD and PASSWORD are exactly the same
+CREATE ROLE mrtimeout
+WITH LOGIN ENCRYPTED PASSWORD 'abc123.'
+VALID UNTIL '2022-12-24 12:00:00';
+
+DROP ROLE IF EXISTS mrtimeout;
+
+-- Here we are creating a role as a group, so we must specify the NOLOGIN option.
+CREATE ROLE cool_kids
+WITH NOLOGIN;
+
+CREATE ROLE mrtimeout
+WITH LOGIN ENCRYPTED PASSWORD 'abc123.'
+IN ROLE cool_kids;
+
+-- IN GROUP is the same as IN ROLE, but 'IN GROUP' is deprecated.
+CREATE ROLE mrtimeout1
+WITH LOGIN ENCRYPTED PASSWORD 'abc123.'
+IN GROUP cool_kids;
+
+CREATE ROLE mrtimeout2
+WITH LOGIN ENCRYPTED PASSWORD 'abc123.';
+
+-- We can assign a group (role with nologin option) to another role after its creation.
+GRANT mrtimeout2
+TO cool_kids;
+
+-- Playing around with admins of another role/group.
+CREATE ROLE mrtimeout_admin
+WITH LOGIN PASSWORD 'abc123';
+
+CREATE ROLE book_reviewers
+WITH NOLOGIN
+ADMIN mrtimeout_admin;
+
+CREATE ROLE mrtimeout_admin2
+WITH LOGIN PASSWORD 'abc123.';
+
+GRANT book_reviewers
+TO mrtimeout_admin2
+WITH ADMIN OPTION;
+
+-- Cleaning up
+DROP ROLE IF EXISTS mrtimeout_admin2;
+DROP ROLE IF EXISTS mrtimeout_admin;
+DROP ROLE IF EXISTS mrtimeout2;
+DROP ROLE IF EXISTS mrtimeout1;
+DROP ROLE IF EXISTS mrtimeout;
+DROP ROLE IF EXISTS book_reviewers;
+DROP ROLE IF EXISTS cool_kids;

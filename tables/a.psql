@@ -1,5 +1,4 @@
--- \d is used to display all type of objects (?)
-
+-- \d <table-name> will display all the information for a table
 -- \dt is used to display tables
 -- \dt+ is used to display even more information
 

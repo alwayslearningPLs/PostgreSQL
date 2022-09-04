@@ -12,7 +12,6 @@ You use `boolean` or `bool` keyword to declare a column with the Boolean data ty
 When you select data from a Boolean column, PostgreSQL converts the values back e.g.,
 `t` to `true`, `f` to `false` and `space` to `null`.
 
-
 ## References
 
 - [Boolean](https://www.postgresqltutorial.com/postgresql-tutorial/postgresql-data-types/)
