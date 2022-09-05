@@ -1,0 +1,64 @@
+-- \x: It is used to off/on the "Expanded display".
+-- \l: List all the databases in the cluster.
+-- \l+: List all the database in the cluster with the Size and other attributes.
+-- \c <database-name>: Connect to the <database-name>.
+-- \d: List all the objects inside a database. Very useful.
+-- \dt: List all the tables inside a database.
+-- \dt+: List all the tables inside a database with Size, Description...
+-- \ds: List all the sequences inside a database.
+
+-- What happens here?
+-- 1. Makes a physical copy of the template database, template1 (It is created by the initdb process during the initialization of the PostgreSQL cluster).
+-- 2. Assigns the database name to the database just copied.
+CREATE DATABASE testing;
+
+\c testing;
+
+\d;
+
+-- Connect to the database template1 and create a table so when we create another table, the table will appear on it.
+\c template1;
+CREATE TABLE dummy_table();
+DROP DATABASE testing;
+CREATE DATABASE testing;
+\d;
+\c template1;
+DROP TABLE dummy_table;
+
+\c testing;
+
+CREATE TABLE users(
+  user_id         serial      PRIMARY KEY,
+  user_name       VARCHAR(50) NOT NULL,
+  user_date_born  TIME        NOT NULL
+);
+
+-- We can create a database from another one using as a template.
+CREATE DATABASE testing2 TEMPLATE testing;
+
+-- How to measure the size of a database
+-- psql method: \l+ postgres
+-- SQL method in Bytes
+SELECT pg_database_size('postgres'); 
+-- SQL method in kBytes
+SELECT pg_size_pretty(pg_database_size('postgres'));
+
+-- Attributes of pg_catalog.pg_database
+-- oid
+-- datname
+-- datdba
+-- encoding
+-- datcollate
+-- datctype
+-- datistemplate
+-- datallowconn
+-- datconnlimit
+-- datlastsysoid
+-- datminmxid
+-- dattablespace
+-- datacl
+SELECT * FROM pg_database WHERE datname like 'testing';
+
+-- PGVERSION is a variable that I have just created, it doesn't really exists as far I now.
+-- /var/lib/postgresql/${PGVERSION}/main
+-- /var/lib/postgresql/${PGVERSION}/main/base (contains all the database defined in the cluster, they are classified by oid - select oid from pg_database)
