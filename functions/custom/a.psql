@@ -1,0 +1,50 @@
+DROP DATABASE IF EXISTS testing;
+CREATE DATABASE testing;
+
+\c testing;
+
+-- CREATE [OR REPLACE] FUNCTION <function_name>(<param>...)
+--    RETURNS <return_type>
+--    LANGUAGE plpgsq
+--  AS
+-- $$
+-- DECLARE
+-- -- variable declaration here
+-- BEGIN
+-- -- logic here
+-- END
+-- $$
+
+CREATE TABLE users(
+  id INT GENERATED ALWAYS AS IDENTITY,
+  name TEXT NOT NULL UNIQUE,
+  PRIMARY KEY (id)
+);
+
+INSERT INTO users(name)
+VALUES
+  ('Manolo'),
+  ('Pedro'),
+  ('Juan'),
+  ('Ivan'),
+  ('Exploit'),
+  ('Nekes');
+
+-- To display the functions already created use \df - display functions;
+CREATE FUNCTION GET_USER_ID_BY_NAME(USER_NAME TEXT)
+  RETURNS INT
+  LANGUAGE PLPGSQL
+AS
+$$
+DECLARE
+  user_id INT;
+BEGIN
+  SELECT id
+  INTO user_id
+  FROM users
+  WHERE name like USER_NAME;
+
+  RETURN user_id;
+END
+$$;
+
