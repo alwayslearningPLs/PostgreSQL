@@ -1,0 +1,31 @@
+-- INTERSECT can be used when two or more queries have the same
+-- number of columns, in the same order with compatible types
+
+WITH first (a, b) AS (
+  VALUES (1, 'first'), (2, 'second'), (3, 'third')
+), second (a, b) AS (
+  VALUES (4, 'fourth'), (5, 'fifth'), (1, 'first')
+)
+SELECT * FROM first
+INTERSECT
+SELECT * FROM second ORDER BY b;
+
+-- Testing order of columns: (It doesn't work because the first column in the first query is text and the first column in the second query is int)
+WITH first (a, b) AS (
+  VALUES (1, 'first'), (2, 'second'), (3, 'third')
+), second (a, b) AS (
+  VALUES (4, 'fourth'), (5, 'fifth'), (1, 'first')
+)
+SELECT b, a FROM first
+INTERSECT
+SELECT a, b FROM second ORDER BY b;
+
+-- Testing number of columns: (It doesn't work because the first query has two columns and the second one, just one column)
+WITH first (a, b) AS (
+  VALUES (1, 'first'), (2, 'second'), (3, 'third')
+), second (a, b) AS (
+  VALUES (4, 'fourth'), (5, 'fifth'), (1, 'fifth')
+)
+SELECT a, b FROM first
+INTERSECT
+SELECT a FROM second ORDER BY a;
