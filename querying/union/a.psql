@@ -1,0 +1,70 @@
+-- https://www.postgresqltutorial.com/postgresql-tutorial/postgresql-union/
+-- https://www.postgresql.org/docs/current/queries-union.html
+CREATE TEMPORARY TABLE dummy (
+  id INT GENERATED ALWAYS AS IDENTITY,
+  name1 TEXT NOT NULL,
+  name2 TEXT NOT NULL,
+  PRIMARY KEY (id)
+);
+
+-- it works!
+INSERT INTO dummy (name1, name2)
+SELECT 'h', 'e'
+  UNION
+SELECT 'l', 'l'
+  UNION
+SELECT 'l', 'l' -- It is a duplicated one, so UNION will not retain it
+  UNION
+SELECT 'o', '!';
+
+DELETE FROM dummy WHERE 1 = 1;
+
+INSERT INTO dummy (name1, name2)
+SELECT 'h', 'e'
+  UNION ALL
+SELECT 'l', 'l'
+  UNION ALL
+SELECT 'l', 'l'
+  UNION ALL
+SELECT 'o', '!';
+
+DELETE FROM dummy WHERE 1 = 1;
+
+-- It insert one row with each column containing the (h,l,l,o) as text
+INSERT INTO dummy (name1, name2)
+SELECT ('h', 'l', 'l', 'o'), ('e', 'l', 'l', '!');
+
+DROP TABLE dummy;
+
+CREATE TEMPORARY TABLE first_table (
+  key TEXT NOT NULL UNIQUE,
+  value TEXT NOT NULL UNIQUE
+);
+
+INSERT INTO first_table (key, value)
+VALUES
+  ('first-key', 'first-value'),
+  ('second-key', 'second-value'),
+  ('third-key', 'third-value');
+
+CREATE TEMPORARY TABLE second_table (
+  key TEXT NOT NULL UNIQUE,
+  value TEXT NOT NULL UNIQUE
+);
+
+INSERT INTO second_table (key, value)
+VALUES
+  ('first-key', 'first-value'),
+  ('fourth-key', 'fourth-value'),
+  ('fifth-key', 'fifth-value');
+
+SELECT * FROM first_table
+UNION ALL
+SELECT * FROM second_table;
+
+SELECT * FROM first_table
+UNION
+SELECT * FROM second_table ORDER BY key;
+
+DROP TABLE first_table;
+DROP TABLE second_table;
