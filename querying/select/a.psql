@@ -1,0 +1,103 @@
+-- WITH Queries (Common Table Expressions)
+-- It allows you to specify one or more subqueries that can be referenced by name in the
+-- primary query.
+--
+-- The subqueries effectively act as temporary tables or views for the duration of the
+-- primary query.
+
+CREATE TABLE regions(
+  id INT GENERATED ALWAYS AS IDENTITY,
+  name TEXT NOT NULL UNIQUE,
+  PRIMARY KEY(id)
+);
+
+CREATE FUNCTION REGION_BY_NAME(region_name TEXT)
+  RETURNS INT
+  LANGUAGE PLPGSQL
+AS
+$$
+DECLARE
+  region_id INT;
+BEGIN
+  SELECT id
+  INTO region_id
+  FROM regions
+  WHERE name LIKE region_name;
+
+  RETURN region_id;
+END
+$$;
+
+INSERT INTO regions (name)
+VALUES
+  ('Spain'),
+  ('France'),
+  ('Portugal'),
+  ('Italy');
+
+CREATE TABLE orders(
+  id INT GENERATED ALWAYS AS IDENTITY,
+  amount INT NOT NULL DEFAULT 0,
+  product TEXT NOT NULL,
+  region_id INT NOT NULL REFERENCES regions(id),
+  PRIMARY KEY(id)
+);
+
+INSERT INTO orders(amount, region_id, product)
+VALUES
+  (1 , (SELECT REGION_BY_NAME('Spain'   )), 'shocks'  ),
+  (2 , (SELECT REGION_BY_NAME('France'  )), 'shorts'  ),
+  (3 , (SELECT REGION_BY_NAME('Portugal')), 'trousers'),
+  (4 , (SELECT REGION_BY_NAME('Italy'   )), 't-shirt' ),
+  (5 , (SELECT REGION_BY_NAME('Spain'   )), 'shocks'  ),
+  (6 , (SELECT REGION_BY_NAME('Portugal')), 'shorts'  ),
+  (7 , (SELECT REGION_BY_NAME('France'  )), 'trousers'),
+  (8 , (SELECT REGION_BY_NAME('Italy'   )), 't-shirt' ),
+  (9 , (SELECT REGION_BY_NAME('Spain'   )), 'shocks'  ),
+  (10, (SELECT REGION_BY_NAME('Spain'   )), 'shocks'  ),
+  (11, (SELECT REGION_BY_NAME('Italy'   )), 'trousers');
+
+-- Obtain per region, amount of orders that were done
+SELECT region_id, SUM(amount) AS amount
+FROM orders
+GROUP BY region_id;
+
+SELECT r.name, SUM(amount) AS amount
+FROM orders AS o LEFT JOIN regions AS r ON o.region_id = r.id
+GROUP BY r.name
+ORDER BY amount DESC;
+
+-- Obtain top regions, whose number of orders are greater than the medium
+WITH regional_sales AS (
+  SELECT region_id, SUM(amount) AS amount
+  FROM orders
+  GROUP BY region_id
+)
+SELECT region_id, amount
+FROM regional_sales
+WHERE amount > (SELECT SUM(amount) / COUNT(amount) FROM regional_sales)
+ORDER BY amount DESC;
+
+-- We can name the columns as we want using the column name definition after the table
+-- name between parentheses.
+WITH regional_sales (id, n, a) AS (
+  SELECT o.region_id, r.name, SUM(o.amount)
+  FROM orders AS o LEFT JOIN regions AS r ON o.region_id = r.id
+  GROUP BY o.region_id, r.name
+)
+SELECT * 
+FROM regional_sales;
+
+-- Using values statement
+WITH a (b, c, d) AS (
+  VALUES (1, 2, 3), (4, 5, 6), (7, 8, 9)
+)
+SELECT * FROM a;
+
+-- Recursives queries: SELECT 1 is the same as VALUES (1)
+WITH RECURSIVE t(n) AS (
+    SELECT 1
+  UNION ALL
+    SELECT n+1 FROM t WHERE n < 100
+)
+SELECT sum(n) FROM t;
