@@ -1,0 +1,40 @@
+-- https://www.postgresqltutorial.com/postgresql-tutorial/postgresql-fetch/
+-- OFFSET start { ROW | ROWS }
+-- FETCH { FIRST | NEXT } [ row_count ] { ROW | ROWS } ONLY
+--
+-- ROW is the same as ROWS.
+-- FIRST is the same as NEXT.
+-- start must be >=0 and by default is 0.
+-- row_count by default is 1.
+
+CREATE TEMPORARY TABLE films(
+  id INT GENERATED ALWAYS AS IDENTITY,
+  name TEXT NOT NULL UNIQUE,
+  length INT NOT NULL,
+  PRIMARY KEY (id)
+);
+
+WITH RECURSIVE t(name, length) AS (
+    SELECT 'film-1', 1
+  UNION ALL
+    SELECT CONCAT('film-', length+10), length+10 FROM t WHERE length < 200
+)
+INSERT INTO films(name, length)
+SELECT name, length FROM t;
+
+-- Get the 3 films with the longest length
+SELECT name, length
+FROM films
+ORDER BY length DESC
+FETCH FIRST 3 ROW ONLY;
+
+SELECT name, length
+FROM films
+ORDER BY length DESC
+FETCH NEXT 3 ROWS ONLY;
+
+SELECT name, length
+FROM films
+ORDER BY length ASC
+OFFSET (SELECT COUNT(*)-3 FROM films) ROW
+FETCH FIRST 3 ROWS ONLY;
