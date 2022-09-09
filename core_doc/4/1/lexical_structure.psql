@@ -1,0 +1,50 @@
+-- https://www.postgresql.org/docs/current/sql-syntax-lexical.html
+-- SQL identifiers and words:
+-- They can start with any letter o underscore.
+-- After the first letter, it is allowed to use letters, underscores, dolars and numbers.
+WITH ááá(n) AS (
+  VALUES (1), (2)
+)
+SELECT *
+FROM ááá;
+
+WITH ___(n) AS (
+  VALUES (1), (2)
+)
+SELECT *
+FROM ___;
+
+WITH _9999$(n) AS (
+  VALUES (1), (2)
+)
+SELECT *
+FROM _9999$;
+
+-- The limit of bytes per SQL identifier or word is NAMEDATALEN-1, being NAMEDATALEN 64, so 63 bytes
+-- is the maximum (the value can change in src/include/pg_config_manual.h). You would have to recompile
+-- PostgreSQL again to see changes.
+SHOW max_identifier_length;
+
+WITH hello_world_from_the_longest_table_name_that_ever_resides_inside_postgresql(n) AS (
+  VALUES (1), (2)
+)
+-- Notice that the identifier will be truncated, and we don't need to write the full identifier
+SELECT * FROM hello_world_from_the_longest_table_name_that_ever_resides_insid;
+
+-- Delimitied identifier or quoted identifier.
+-- We need to use quoted marks when we use some keywords reserved by postgresql like in this case.
+WITH "select"(n) AS (
+  VALUES (1), (2)
+)
+SELECT * FROM "select";
+
+-- We can use spaces and anspersand inside double quotes
+WITH "hello world"(n) AS (
+  VALUES (1), (2)
+)
+SELECT * FROM "hello world";
+
+WITH "hello & bye"(n) AS (
+  VALUES (1), (2)
+)
+SELECT * FROM "hello & bye";

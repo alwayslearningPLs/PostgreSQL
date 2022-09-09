@@ -1,0 +1,9 @@
+
+-- It concatenates foo and bar without whitespace between them
+SELECT 'foo'
+'bar' AS my_string;
+
+-- It doesn't work...
+SELECT 'foo' 'bar' AS my_string;
+
+SELECT E'f \b foo\nbar \r form_feed \f here\tsome\ttabs\noctal: \127\thex: \x39';
