@@ -1,0 +1,101 @@
+-- ANY operator / SOME operator (It seems that they are synonyms)
+-- Compare a scalar value with a set of values returned by a subquery
+
+WITH users(id, name, age) AS (
+  VALUES (1, 'pedro', 20), (2, 'manuel', 18), (3, 'diego', 10)
+)
+SELECT *
+FROM users
+WHERE name NOT IN ('ivan', 'manolo');
+
+-- We can't use values after ANY operator, we have to use another query (subquery)
+WITH users(id, name, age) AS (
+  VALUES (1, 'pedro', 20), (2, 'manuel', 18), (3, 'diego', 10)
+)
+SELECT *
+FROM users
+WHERE name <> ANY (SELECT 'ivan' UNION ALL SELECT 'manolo');
+
+CREATE TABLE films (
+  film_id INT GENERATED ALWAYS AS IDENTITY,
+  name TEXT NOT NULL UNIQUE,
+  length INT DEFAULT 1,
+  PRIMARY KEY (film_id)
+);
+
+-- This module is used to generate uuid(Universal Unique Identifier)
+-- Help: https://www.postgresql.org/docs/9.5/uuid-ossp.html
+CREATE EXTENSION IF NOT EXISTS 'uuid-ossp';
+
+-- To generate the UUID value based on the combination of computer's MAC address,
+-- current timestamp and a random value:
+SELECT uuid_generate_v1();
+-- To generate the UUID value based on random values:
+SELECT uuid_generate_v4();
+
+-- If we want to use random numbers from a seed, we could use: setseed(0.5), random();
+
+WITH RECURSIVE t(name, length) AS (
+    SELECT 'film-1', 1
+  UNION ALL
+    SELECT CONCAT('film-', length+10), length+10 FROM t WHERE length < 200
+)
+INSERT INTO films (name, length)
+SELECT name, length from t; 
+
+CREATE TABLE categories (
+  category_id INT GENERATED ALWAYS AS IDENTITY,
+  name TEXT NOT NULL UNIQUE,
+  PRIMARY KEY (category_id)
+);
+
+INSERT INTO categories (name)
+VALUES ('action'), ('adventure'), ('comedy'), ('drama'), ('fantasy'), ('horror');
+
+CREATE TABLE film_category (
+  film_id INT NOT NULL REFERENCES films(film_id) ON UPDATE CASCADE,
+  category_id INT NOT NULL REFERENCES categories(category_id) ON UPDATE CASCADE,
+  UNIQUE(film_id, category_id)
+);
+
+INSERT INTO film_category (film_id, category_id)
+VALUES (1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (6, 6),
+  (7, 6), (8, 5), (9, 4), (10, 3), (11, 2), (12, 1), (13, 1),
+  (14, 2), (15, 3), (16, 4);
+
+-- Select max film by length
+SELECT name, length
+FROM films
+WHERE length IN (SELECT MAX(f.length) FROM film_category AS fc INNER JOIN films AS f USING(film_id));
+
+-- Select max film by length in each category
+SELECT c.name, MAX(f.length)
+FROM film_category AS fc INNER JOIN films AS f USING(film_id)
+  INNER JOIN categories AS c USING(category_id)
+GROUP BY c.name;
+
+-- Just to test that the previous query is working properly
+SELECT c.name, STRING_AGG(CAST (f.length AS TEXT), ':')
+FROM film_category AS fc INNER JOIN films AS f USING(film_id)
+  INNER JOIN categories AS c USING(category_id)
+GROUP BY c.name;
+
+-- Get title name and category of the greatest length per category
+SELECT ff.name, c.name
+FROM film_category AS ffc INNER JOIN films AS ff USING(film_id)
+  INNER JOIN categories AS c USING (category_id)
+WHERE length >= ANY(
+  SELECT MAX(f.length)
+  FROM film_category AS fc INNER JOIN films AS f USING (film_id)
+  WHERE ffc.category_id = fc.category_id
+  GROUP BY fc.category_id);
+
+-- Get title name and category id per categories: drama and action
+SELECT f.name, fc.category_id
+FROM film_category AS fc INNER JOIN films AS f USING(film_id)
+WHERE fc.category_id = ANY( -- we could use here an IN operator
+  SELECT category_id
+  FROM categories
+  WHERE name = 'drama' OR name = 'action'
+)
+ORDER BY fc.category_id;
